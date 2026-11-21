@@ -139,6 +139,16 @@ button.habit-tile:disabled{opacity:1;cursor:default}
 .diet-log li span{min-width:0}
 .diet-log li button{flex:none}
 .diet-note{font-size:.82rem}
+
+.day-controls{display:flex;align-items:center;gap:5px;flex:none}
+.day-controls p{min-width:5ch;text-align:center}
+.day-controls button{width:30px;height:30px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:5px;background:var(--paper);color:var(--olive);font:1.35rem/1 Georgia,serif;cursor:pointer}
+.day-controls button:disabled{opacity:.4;cursor:default}
+.day-controls button:hover:not(:disabled){background:#e9e7d9}
+.trail-progress{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.trail-progress progress{width:clamp(90px,16vw,150px);height:8px;accent-color:var(--rose)}
+#habit-trail{--rose:#874a58}
+@media(max-width:390px){#tasks .heading{flex-wrap:wrap;gap:7px}}
 </style>
 </head>
 <body>
@@ -155,7 +165,11 @@ button.habit-tile:disabled{opacity:1;cursor:default}
 <div class="footer"><p id="active"></p><span class="legend" aria-label="Darker burgundy means more tasks and habits completed">Less <i class="swatch"></i><i class="swatch" data-count="1"></i><i class="swatch" data-count="2"></i><i class="swatch" data-count="3"></i><i class="swatch" data-count="4"></i> More</span></div>
 </section>
 <section id="tasks" aria-labelledby="task-heading">
-<div class="heading"><h2 id="task-heading">Today’s top three</h2><p id="selected-date"></p></div>
+<div class="heading"><h2 id="task-heading">Today’s top three</h2><div class="day-controls" role="group" aria-label="Planner date">
+  <button id="previous-day" type="button" aria-label="Previous day">‹</button>
+  <p id="selected-date" aria-live="polite"></p>
+  <button id="next-day" type="button" aria-label="Next day">›</button>
+</div></div>
 <div id="rows"></div>
 <div class="footer"><output id="count" aria-live="polite"></output><button class="link" id="back" hidden>Back to today</button></div>
 </section>
@@ -211,6 +225,7 @@ function renderTasks() {
   const current = dateKey(selected) === dateKey(today);
   get("task-heading").textContent = current ? "Today’s top three" : "Top three";
   get("selected-date").textContent = label.format(selected);
+  get("next-day").disabled = current;
   get("back").hidden = current;
   const tasks = tasksFor(selected);
   get("rows").replaceChildren(...tasks.map((task, index) => {
@@ -289,6 +304,13 @@ function refreshDate() {
 }
 get("today").textContent = longLabel.format(today);
 get("back").addEventListener("click", () => pick(today));
+function stepPlannerDate(offset) {
+  const next = new Date(selected);
+  next.setDate(next.getDate() + offset);
+  if (dateKey(next) <= dateKey(today)) pick(next);
+}
+get("previous-day").addEventListener("click", () => stepPlannerDate(-1));
+get("next-day").addEventListener("click", () => stepPlannerDate(1));
 window.addEventListener("focus", refreshDate);
 window.addEventListener("storage", event => {
   if (event.key === storageKey || event.key === null) {
@@ -500,7 +522,11 @@ function renderHabitBoard() {
   const intro = element("div",undefined,root);
   intro.className = "habit-intro";
   element("p",longLabel.format(selected),intro);
-  const progress = element("output",undefined,intro);
+  const status = element("div",undefined,intro);
+  status.className = "trail-progress";
+  const meter = element("progress",undefined,status);
+  meter.setAttribute("aria-label","Habit Trail completion");
+  const progress = element("output",undefined,status);
   progress.setAttribute("aria-live","polite");
   const board = element("div",undefined,root);
   board.className = "habit-board";
@@ -509,7 +535,13 @@ function renderHabitBoard() {
   const path = element("ol",undefined,board);
   path.className = "habit-path";
   function updateProgress() {
-    progress.textContent = habits.filter(habit => Object.hasOwn(checked,habit) && checked[habit]).length + " of " + habits.length + " habits done";
+    const writtenTasks = tasksFor(selected).filter(task => task.text.trim());
+    const finishedHabits = habits.filter(habit => Object.hasOwn(checked,habit) && checked[habit]).length;
+    const total = habits.length + writtenTasks.length;
+    const done = finishedHabits + writtenTasks.filter(task => task.done).length;
+    meter.max = Math.max(1,total);
+    meter.value = done;
+    progress.textContent = done + " of " + total + " trail stops complete";
   }
   const taskTiles = [];
   const roadTiles = [];
@@ -567,9 +599,9 @@ function renderHabitBoard() {
       tile.setAttribute("aria-pressed",String(hasTask && done));
       check.textContent = hasTask && done ? "✓" : "";
     });
+    updateProgress();
   };
   updateTrailTasks();
-  updateProgress();
   const finishSign = element("strong","Finish",board);
   finishSign.className = "habit-sign";
   const resize = () => layoutTrail(board,roadTiles,startSign,finishSign);
