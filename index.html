@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111513">
+<title>Prisha’s Daily</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#111513;color:#edf3ee;--muted:#a2b0a6;--line:#303b34;--green:#a9eba9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:clamp(16px,4vw,48px)}
+main{width:min(100%,1050px)}
+header{margin-bottom:24px}
+h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.065em;line-height:1;margin:0 0 10px}
+h2{font-size:1.3rem;letter-spacing:-.035em;margin:0}
+p{margin:0;color:var(--muted)}
+.dashboard{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+section{background:#1a211d;border:1px solid var(--line);border-radius:20px;padding:clamp(16px,3vw,25px);min-width:0}
+.heading,.footer{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.heading p,.footer,output{font-size:.82rem;font-variant-numeric:tabular-nums}
+.heading p{text-align:right}
+#weekdays,#tiles{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:4px}
+#weekdays{margin:18px 0 5px;color:var(--muted);font-size:.72rem}
+#tiles{grid-template-rows:repeat(7,1fr);grid-auto-flow:column}
+.cell{aspect-ratio:1;background:#29362e;border:1px solid transparent;border-radius:4px;padding:0;min-width:0;color:#112519;font-size:clamp(.6rem,1.5vw,1rem);font-weight:800;cursor:pointer}
+.cell[data-count="1"],.swatch[data-count="1"]{background:#63af78}
+.cell[data-count="2"],.swatch[data-count="2"]{background:#88d595}
+.cell[data-count="3"],.swatch[data-count="3"]{background:#b9f5a9}
+.cell[aria-current="date"]{border-color:#bfd0c2}
+.cell[aria-pressed="true"]{outline:2px solid var(--green);outline-offset:1px}
+.cell:disabled{background:transparent;cursor:default}
+.footer{margin-top:14px;color:var(--muted)}
+.legend{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.swatch{width:10px;height:10px;border-radius:2px;background:#29362e}
+#rows{display:grid;gap:9px;margin:18px 0 14px}
+.task{display:grid;grid-template-columns:1.2rem 1.25rem minmax(0,1fr);gap:10px;align-items:center;padding:12px 10px;border:1px solid var(--line);border-radius:10px;color:var(--muted)}
+.task input[type=checkbox]{width:17px;height:17px;margin:0;accent-color:var(--green);cursor:pointer}
+.task input[type=text]{width:100%;font:inherit;color:#edf3ee;background:transparent;border:0;padding:2px}
+.task input[type=text]::placeholder{color:var(--muted)}
+.task:has(input:checked) input[type=text]{text-decoration:line-through;color:var(--muted)}
+button.link{font:inherit;color:var(--green);background:none;border:0;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+#storage{font-size:.85rem;margin-top:14px}
+@media(max-width:640px){body{place-items:start center}.dashboard{grid-template-columns:1fr}#tasks{grid-row:1}.cell{font-size:.8rem}header{margin-bottom:16px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Prisha’s Daily</h1><p id="today"></p></header>
+<div class="dashboard">
+<section aria-labelledby="activity">
+<div class="heading"><h2 id="activity">Activity</h2><p>Last 13 weeks</p></div>
+<div id="weekdays" aria-hidden="true"><span>Past</span><span style="grid-column:12 / -1;text-align:right">Now</span></div>
+<div id="tiles" role="group" aria-label="Daily activity, arranged in weeks from Monday to Sunday"></div>
+<div class="footer"><p id="active"></p><span class="legend" aria-label="Lighter green means more tasks completed">Less <i class="swatch"></i><i class="swatch" data-count="1"></i><i class="swatch" data-count="2"></i><i class="swatch" data-count="3"></i> More</span></div>
+</section>
+<section id="tasks" aria-labelledby="task-heading">
+<div class="heading"><h2 id="task-heading">Today’s top three</h2><p id="selected-date"></p></div>
+<div id="rows"></div>
+<div class="footer"><output id="count" aria-live="polite"></output><button class="link" id="back" hidden>Back to today</button></div>
+</section>
+</div>
+<p id="storage" hidden role="status">Browser storage is unavailable. Changes will last until you close or reload this page.</p>
+</main>
+<script>
+const storageKey = "prishas-daily-v1";
+const get = id => document.getElementById(id);
+const dateKey = date => [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+  .map((part, index) => String(part).padStart(index ? 2 : 4, "0")).join("-");
+const label = new Intl.DateTimeFormat("en-IN", {weekday:"short", month:"short", day:"numeric"});
+const longLabel = new Intl.DateTimeFormat("en-IN", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+function readDays() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  } catch {
+    get("storage").hidden = false;
+    return {};
+  }
+}
+let days = readDays();
+let today = new Date();
+let selected = today;
+const emptyTask = () => ({text:"", done:false});
+function tasksFor(date) {
+  const tasks = days[dateKey(date)];
+  return [0, 1, 2].map(index => tasks?.[index] ?? emptyTask());
+}
+function completed(date) {
+  return tasksFor(date).filter(task => task.text.trim() && task.done).length;
+}
+function save(index, task) {
+  const tasks = tasksFor(selected);
+  tasks[index] = task;
+  days[dateKey(selected)] = tasks;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(days));
+  } catch {
+    get("storage").hidden = false;
+  }
+  renderProgress();
+  renderActivity();
+}
+function renderProgress() {
+  get("count").textContent = completed(selected) + " of 3 done";
+}
+function renderTasks() {
+  const current = dateKey(selected) === dateKey(today);
+  get("task-heading").textContent = current ? "Today’s top three" : "Top three";
+  get("selected-date").textContent = label.format(selected);
+  get("back").hidden = current;
+  const tasks = tasksFor(selected);
+  get("rows").replaceChildren(...tasks.map((task, index) => {
+    const row = document.createElement("div");
+    row.className = "task";
+    const number = document.createElement("span");
+    number.textContent = index + 1 + ".";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.setAttribute("aria-label", "Complete task " + (index + 1));
+    checkbox.checked = task.done;
+    checkbox.disabled = !task.text.trim();
+    const input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 160;
+    input.setAttribute("aria-label", "Task " + (index + 1));
+    input.placeholder = "Add a task";
+    input.value = task.text;
+    input.addEventListener("input", () => {
+      checkbox.disabled = !input.value.trim();
+      if (checkbox.disabled) checkbox.checked = false;
+      save(index, {text:input.value, done:checkbox.checked});
+    });
+    checkbox.addEventListener("change", () => save(index, {text:input.value, done:checkbox.checked}));
+    row.append(number, checkbox, input);
+    return row;
+  }));
+  renderProgress();
+}
+function pick(date) {
+  selected = date;
+  renderTasks();
+  renderActivity();
+}
+function renderActivity() {
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  start.setDate(start.getDate() - (start.getDay() + 6) % 7 - 12 * 7);
+  const grid = get("tiles");
+  const focusedKey = grid.contains(document.activeElement) ? document.activeElement.dataset.date : undefined;
+  let active = 0;
+  const cells = Array.from({length:91}, (_, index) => {
+    const date = new Date(start);
+    date.setDate(date.getDate() + index);
+    const key = dateKey(date);
+    const count = completed(date);
+    const cell = document.createElement("button");
+    cell.className = "cell";
+    cell.type = "button";
+    cell.dataset.date = key;
+    cell.disabled = key > dateKey(today);
+    if (!cell.disabled) {
+      if (count) active++;
+      cell.dataset.count = count;
+      cell.textContent = count ? "✓" : "";
+      cell.title = longLabel.format(date) + " · " + count + " of 3 done";
+      cell.setAttribute("aria-label", cell.title);
+      cell.setAttribute("aria-pressed", String(key === dateKey(selected)));
+      if (key === dateKey(today)) cell.setAttribute("aria-current", "date");
+      cell.addEventListener("click", () => pick(date));
+    }
+    return cell;
+  });
+  grid.replaceChildren(...cells);
+  if (focusedKey) cells.find(cell => cell.dataset.date === focusedKey)?.focus();
+  get("active").textContent = active + (active === 1 ? " active day" : " active days");
+}
+function refreshDate() {
+  const next = new Date();
+  const wasToday = dateKey(selected) === dateKey(today);
+  if (dateKey(next) === dateKey(today)) return;
+  today = next;
+  get("today").textContent = longLabel.format(today);
+  pick(wasToday ? today : selected);
+}
+get("today").textContent = longLabel.format(today);
+get("back").addEventListener("click", () => pick(today));
+window.addEventListener("focus", refreshDate);
+window.addEventListener("storage", event => {
+  if (event.key === storageKey || event.key === null) {
+    days = readDays();
+    renderTasks();
+    renderActivity();
+  }
+});
+setInterval(refreshDate, 15000);
+pick(today);
+</script>
+</body>
+</html>
