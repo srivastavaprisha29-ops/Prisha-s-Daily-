@@ -23,9 +23,9 @@ section{background:#1a211d;border:1px solid var(--line);border-radius:20px;paddi
 #weekdays{margin:18px 0 5px;color:var(--muted);font-size:.72rem}
 #tiles{grid-template-rows:repeat(7,1fr);grid-auto-flow:column}
 .cell{aspect-ratio:1;background:#29362e;border:1px solid transparent;border-radius:4px;padding:0;min-width:0;color:#112519;font-size:clamp(.6rem,1.5vw,1rem);font-weight:800;cursor:pointer}
-.cell[data-count="1"],.swatch[data-count="1"]{background:#63af78}
-.cell[data-count="2"],.swatch[data-count="2"]{background:#88d595}
-.cell[data-count="3"],.swatch[data-count="3"]{background:#b9f5a9}
+.cell[data-count="1"],.swatch[data-count="1"]{background:#e6afbe}
+.cell[data-count="2"],.swatch[data-count="2"]{background:#be6c87}
+.cell[data-count="3"],.swatch[data-count="3"]{background:#913d5a}
 .cell[aria-current="date"]{border-color:#bfd0c2}
 .cell[aria-pressed="true"]{outline:2px solid var(--green);outline-offset:1px}
 .cell:disabled{background:transparent;cursor:default}
@@ -114,6 +114,11 @@ button.habit-tile[aria-pressed=true]{background:#f7a9c7;border-color:#bd5b81;box
  .habit-step[data-small-direction=down]::after{width:8px;height:16px;top:100%;left:calc(50% - 4px);right:auto}
 }
 @media(prefers-reduced-motion:reduce){button.habit-tile{transition:none}}
+.cell[data-count="4"],.swatch[data-count="4"]{background:#581b34}
+.cell[data-count="3"],.cell[data-count="4"]{color:#fff9fa}
+.cell[data-count="1"],.cell[data-count="2"]{color:#421126}
+#habit-trail .heading{background:#ffdce7}
+#habit-trail{scroll-margin-top:16px}
 </style>
 </head>
 <body>
@@ -127,7 +132,7 @@ button.habit-tile[aria-pressed=true]{background:#f7a9c7;border-color:#bd5b81;box
 <div class="heading"><h2 id="activity">Activity</h2><p>Last 13 weeks</p></div>
 <div id="weekdays" aria-hidden="true"><span>Past</span><span style="grid-column:12 / -1;text-align:right">Now</span></div>
 <div id="tiles" role="group" aria-label="Daily activity, arranged in weeks from Monday to Sunday"></div>
-<div class="footer"><p id="active"></p><span class="legend" aria-label="Lighter green means more tasks completed">Less <i class="swatch"></i><i class="swatch" data-count="1"></i><i class="swatch" data-count="2"></i><i class="swatch" data-count="3"></i> More</span></div>
+<div class="footer"><p id="active"></p><span class="legend" aria-label="Darker burgundy means more tasks and habits completed">Less <i class="swatch"></i><i class="swatch" data-count="1"></i><i class="swatch" data-count="2"></i><i class="swatch" data-count="3"></i><i class="swatch" data-count="4"></i> More</span></div>
 </section>
 <section id="tasks" aria-labelledby="task-heading">
 <div class="heading"><h2 id="task-heading">Today’s top three</h2><p id="selected-date"></p></div>
@@ -136,6 +141,7 @@ button.habit-tile[aria-pressed=true]{background:#f7a9c7;border-color:#bd5b81;box
 </section>
 </div>
 <section id="extras" class="toolbox" hidden aria-labelledby="extra-heading"><div class="heading"><h2 id="extra-heading"></h2><button id="close-tools" type="button">Close</button></div><div id="tool"></div></section>
+<section id="habit-trail" class="toolbox" aria-labelledby="habit-heading"><div class="heading"><h2 id="habit-heading" tabindex="-1">Habit Trail</h2></div><div id="habit-content"></div></section>
 <p id="storage" hidden role="status">Browser storage is unavailable. Changes will last until you close or reload this page.</p>
 </main>
 <script>
@@ -215,7 +221,7 @@ function renderTasks() {
 }
 function pick(date) {
   selected = date;
-  if (panel === "Habits") showPanel("Habits");
+  renderHabitBoard();
   renderTasks();
   renderActivity();
 }
@@ -229,7 +235,7 @@ function renderActivity() {
     const date = new Date(start);
     date.setDate(date.getDate() + index);
     const key = dateKey(date);
-    const count = Math.min(3, completed(date) + Object.values(tools["habits:" + key] || {}).filter(Boolean).length);
+    const count = completed(date) + Object.values(tools["habits:" + key] || {}).filter(Boolean).length;
     const cell = document.createElement("button");
     cell.className = "cell";
     cell.type = "button";
@@ -237,9 +243,9 @@ function renderActivity() {
     cell.disabled = key > dateKey(today);
     if (!cell.disabled) {
       if (count) active++;
-      cell.dataset.count = count;
+      cell.dataset.count = count < 3 ? count : count < 5 ? 3 : 4;
       cell.textContent = count ? "✓" : "";
-      cell.title = longLabel.format(date) + " · " + count + (count === 3 ? "+ completions" : " completions");
+      cell.title = longLabel.format(date) + " · " + count + (count === 1 ? " completion" : " completions");
       cell.setAttribute("aria-label", cell.title);
       cell.setAttribute("aria-pressed", String(key === dateKey(selected)));
       if (key === dateKey(today)) cell.setAttribute("aria-current", "date");
@@ -296,7 +302,7 @@ const monthFormat = new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"
 let audioUrl;
 function showPanel(name) {
   panel = name;
-  get("extras").hidden = name === "Today";
+  get("extras").hidden = name === "Today" || name === "Habits";
   for (const button of get("nav").querySelectorAll("button")) {
     if (button.textContent === name) button.setAttribute("aria-current","page");
     else button.removeAttribute("aria-current");
@@ -304,6 +310,11 @@ function showPanel(name) {
   if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = undefined; }
   get("tool").replaceChildren();
   if (name === "Today") { pick(today); return; }
+  if (name === "Habits") {
+    get("habit-heading").focus({preventScroll:true});
+    get("habit-trail").scrollIntoView({block:"start"});
+    return;
+  }
   get("extra-heading").textContent = name;
   renderTool();
 }
@@ -415,14 +426,16 @@ const habitLabels = ["Study","Tech projects","Research paper","French practice",
 
 const habitStickers = ["✏️","💻","📚","💌","🎸","📖","🛼","💧","🫧","🪥","🍓","🌷","🎀","🍒","🌟","🧁"];
 function renderHabitBoard() {
+  const root = get("habit-content");
+  root.replaceChildren();
   const habits = [...habitLabels, ...(tools.customHabits || [])];
   const checked = tools["habits:" + dateKey(selected)] ??= {};
-  const intro = element("div");
+  const intro = element("div",undefined,root);
   intro.className = "habit-intro";
   element("p",longLabel.format(selected),intro);
   const progress = element("output",undefined,intro);
   progress.setAttribute("aria-live","polite");
-  const board = element("div");
+  const board = element("div",undefined,root);
   board.className = "habit-board";
   const opening = element("div",undefined,board);
   opening.className = "habit-flourish";
@@ -476,14 +489,14 @@ function renderHabitBoard() {
   finish.className = "habit-flourish";
   element("span","☁️ ✦ 🌷",finish).setAttribute("aria-hidden","true");
   element("strong","Finish",finish);
-  const form = element("form");
+  const form = element("form",undefined,root);
   const input = element("input",undefined,form);
   input.required = true;
   input.maxLength = 60;
   input.placeholder = "Name your habit";
   input.setAttribute("aria-label","New habit");
   element("button","Add habit",form).type = "submit";
-  const feedback = element("p");
+  const feedback = element("p",undefined,root);
   feedback.className = "habit-feedback";
   feedback.setAttribute("role","status");
   form.addEventListener("submit",event => {
@@ -496,9 +509,9 @@ function renderHabitBoard() {
     }
     (tools.customHabits ??= []).push(name);
     saveTools();
-    showPanel("Habits");
-    get("tool").querySelector("form input").focus();
-    get("tool").querySelector(".habit-feedback").textContent = name + " added to the board.";
+    renderHabitBoard();
+    root.querySelector("form input").focus();
+    root.querySelector(".habit-feedback").textContent = name + " added to the board.";
   });
 }
 
@@ -512,7 +525,6 @@ function renderTool() {
     notes.addEventListener("input",() => { tools.notes = notes.value; saveTools(); });
     return;
   }
-  if (panel === "Habits") { renderHabitBoard(); return; }
   if (panel === "Music") {
     const file = element("input");
     file.type = "file";
