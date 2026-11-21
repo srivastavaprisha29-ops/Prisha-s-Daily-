@@ -119,6 +119,7 @@ button.habit-tile[aria-pressed=true]{background:#f7a9c7;border-color:#bd5b81;box
 .cell[data-count="1"],.cell[data-count="2"]{color:#421126}
 #habit-trail .heading{background:#ffdce7}
 #habit-trail{scroll-margin-top:16px}
+button.habit-tile:disabled{opacity:1;cursor:default;border-color:#dab5ad}
 </style>
 </head>
 <body>
@@ -182,6 +183,7 @@ function save(index, task) {
   }
   renderProgress();
   renderActivity();
+  updateTrailTasks();
 }
 function renderProgress() {
   get("count").textContent = completed(selected) + " of 3 done";
@@ -271,8 +273,7 @@ window.addEventListener("focus", refreshDate);
 window.addEventListener("storage", event => {
   if (event.key === storageKey || event.key === null) {
     days = readDays();
-    renderTasks();
-    renderActivity();
+    pick(selected);
   }
 });
 setInterval(refreshDate, 15000);
@@ -425,6 +426,7 @@ function renderSchedule() {
 const habitLabels = ["Study","Tech projects","Research paper","French practice","Guitar","Read","Workout","Water","Skincare","Dental care"];
 
 const habitStickers = ["✏️","💻","📚","💌","🎸","📖","🛼","💧","🫧","🪥","🍓","🌷","🎀","🍒","🌟","🧁"];
+let updateTrailTasks = () => {};
 function renderHabitBoard() {
   const root = get("habit-content");
   root.replaceChildren();
@@ -446,7 +448,10 @@ function renderHabitBoard() {
   function updateProgress() {
     progress.textContent = habits.filter(habit => Object.hasOwn(checked,habit) && checked[habit]).length + " of " + habits.length + " habits done";
   }
-  for (const [index, habit] of habits.entries()) {
+  const taskTiles = [];
+  const taskCount = tasksFor(selected).length;
+  const labels = [...Array(taskCount).fill(""), ...habits];
+  for (const [index, habit] of labels.entries()) {
     const step = element("li",undefined,path);
     step.className = "habit-step";
     for (const [width,prefix,directionKey] of [[4,"","direction"],[2,"small-","smallDirection"]]) {
@@ -468,7 +473,19 @@ function renderHabitBoard() {
     const check = element("span",undefined,top);
     check.className = "habit-check";
     check.setAttribute("aria-hidden","true");
-    element("span",habit,tile).className = "habit-title";
+    const title = element("span",habit,tile);
+    title.className = "habit-title";
+    if (index < taskCount) {
+      sticker.textContent = ["🎀","🍓","🌷"][index];
+      taskTiles.push({tile,title,check});
+      tile.addEventListener("click",() => {
+        const task = tasksFor(selected)[index];
+        if (!task.text.trim()) return;
+        save(index,{...task,done:!task.done});
+        get("rows").children[index].querySelector('input[type="checkbox"]').checked = !task.done;
+      });
+      continue;
+    }
     let done = Object.hasOwn(checked,habit) && checked[habit] === true;
     function updateTile() {
       tile.setAttribute("aria-pressed",String(done));
@@ -484,6 +501,19 @@ function renderHabitBoard() {
       renderActivity();
     });
   }
+  updateTrailTasks = () => {
+    const tasks = tasksFor(selected);
+    taskTiles.forEach(({tile,title,check}, index) => {
+      const {text,done} = tasks[index];
+      const hasTask = Boolean(text.trim());
+      title.textContent = hasTask ? text : "";
+      tile.disabled = !hasTask;
+      tile.setAttribute("aria-label",hasTask ? text : "Empty daily task slot " + (index + 1));
+      tile.setAttribute("aria-pressed",String(hasTask && done));
+      check.textContent = hasTask && done ? "✓" : "";
+    });
+  };
+  updateTrailTasks();
   updateProgress();
   const finish = element("div",undefined,board);
   finish.className = "habit-flourish";
