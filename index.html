@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#111513">
+<meta name="theme-color" content="#fff6f4">
 <title>Prisha’s Daily</title>
 <style>
 :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#111513;color:#edf3ee;--muted:#a2b0a6;--line:#303b34;--green:#a9eba9}
@@ -43,11 +43,53 @@ button.link{font:inherit;color:var(--green);background:none;border:0;padding:0;c
 :focus-visible{outline:2px solid var(--green);outline-offset:3px}
 #storage{font-size:.85rem;margin-top:14px}
 @media(max-width:640px){body{place-items:start center}.dashboard{grid-template-columns:1fr}#tasks{grid-row:1}.cell{font-size:.8rem}header{margin-bottom:16px}}
+
+:root{color-scheme:light;background:#fff6f4;color:#552232;--muted:#845162;--line:#edc5ca;--green:#3d754c}
+body{place-items:start center;padding-top:22px;background:radial-gradient(ellipse at top right,#ffe1da,transparent 65%)}
+main{width:min(100%,1100px)}
+header{overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:130px;padding:24px;border-radius:19px;background:linear-gradient(110deg,#ffdbde 35%,#f5aaa7 100%);border:1px solid #edb6bc;margin-bottom:13px}
+h1,h2{font-family:Georgia,serif;color:#68263b}
+h1{font-weight:700}
+.flip{display:flex;gap:5px;align-items:center;color:#791f3d;font-weight:800;font-variant-numeric:tabular-nums}
+.flip b{font-size:clamp(1.45rem,5vw,2.8rem);padding:.12em .23em;border-radius:8px;background:linear-gradient(#ffcece 49%,#df8e9b 50%,#f8b4bf 52%)}
+nav{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px}
+nav button{border:1px solid var(--line);border-radius:9px;padding:7px 12px;background:#ffe4e5;color:#68263b;font:inherit;font-size:.87rem;cursor:pointer}
+nav button:nth-child(2n){background:#ffded0}
+nav button[aria-current]{background:#792e47;color:white}
+section{background:#fffafa;border-radius:15px;padding:clamp(14px,2.3vw,22px)}
+.heading{background:#ffe4e6;padding:8px 10px;border-radius:7px}
+.task{background:#fff0ef}
+.task input[type=text]{color:#552232}
+.cell,.swatch{background:#f4d8db}
+.cell[aria-current="date"]{border-color:#a45169}
+#tiles{max-width:415px}
+#weekdays{max-width:415px}
+button.link{color:#7c2949}
+.toolbox{margin-top:15px}
+.toolbox label{display:block;margin:10px 0}
+.toolbox input:not([type=checkbox]),.toolbox textarea{border:1px solid var(--line);border-radius:7px;background:#fff5f5;color:inherit;font:inherit;padding:7px;max-width:100%}
+.toolbox textarea{display:block;width:100%;margin-top:10px;min-height:100px}
+.toolbox form{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.toolbox button{border:1px solid var(--line);border-radius:7px;background:#ffe4e6;color:#68263b;padding:6px 10px;cursor:pointer}
+.toolbox ul{padding-left:20px}
+.toolbox li{margin:.55em 0;overflow-wrap:anywhere}
+.toolbox li button{margin-left:8px}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:12px 0;text-align:center}
+.month button{min-width:0;padding:6px 0}
+.month button[aria-pressed=true]{background:#792e47;color:white}
+.month small{display:block}
+#extras .heading{flex-wrap:wrap}
+#extras progress{width:min(280px,100%);accent-color:#c25472}
+#extras audio{width:min(360px,100%);display:block;margin-top:12px}
+@media(max-width:500px){header{min-height:96px;padding:14px} h1{font-size:2rem} .flip b{font-size:1.5rem} nav button{padding:6px 8px}}
 </style>
 </head>
 <body>
 <main>
-<header><h1>Prisha’s Daily</h1><p id="today"></p></header>
+<header><div><h1>Prisha’s Daily</h1><p id="today"></p></div><time id="clock" class="flip"><b id="hour"></b><b id="minute"></b><small id="period"></small></time></header>
+<nav aria-label="Dashboard tools" id="nav">
+<button type="button" aria-current="page">Today</button><button type="button" >Schedule</button><button type="button" >Notes</button><button type="button" >Goals</button><button type="button" >Habits</button><button type="button" >Checklist</button><button type="button" >Music</button><button type="button" >Closet</button><button type="button" >Finance</button><button type="button" >School</button><button type="button" >Fitness</button><button type="button" >Weather</button>
+</nav>
 <div class="dashboard">
 <section aria-labelledby="activity">
 <div class="heading"><h2 id="activity">Activity</h2><p>Last 13 weeks</p></div>
@@ -61,6 +103,7 @@ button.link{font:inherit;color:var(--green);background:none;border:0;padding:0;c
 <div class="footer"><output id="count" aria-live="polite"></output><button class="link" id="back" hidden>Back to today</button></div>
 </section>
 </div>
+<section id="extras" class="toolbox" hidden aria-labelledby="extra-heading"><div class="heading"><h2 id="extra-heading"></h2><button id="close-tools" type="button">Close</button></div><div id="tool"></div></section>
 <p id="storage" hidden role="status">Browser storage is unavailable. Changes will last until you close or reload this page.</p>
 </main>
 <script>
@@ -140,6 +183,7 @@ function renderTasks() {
 }
 function pick(date) {
   selected = date;
+  if (panel === "Habits") showPanel("Habits");
   renderTasks();
   renderActivity();
 }
@@ -153,7 +197,7 @@ function renderActivity() {
     const date = new Date(start);
     date.setDate(date.getDate() + index);
     const key = dateKey(date);
-    const count = completed(date);
+    const count = Math.min(3, completed(date) + Object.values(tools["habits:" + key] || {}).filter(Boolean).length);
     const cell = document.createElement("button");
     cell.className = "cell";
     cell.type = "button";
@@ -163,7 +207,7 @@ function renderActivity() {
       if (count) active++;
       cell.dataset.count = count;
       cell.textContent = count ? "✓" : "";
-      cell.title = longLabel.format(date) + " · " + count + " of 3 done";
+      cell.title = longLabel.format(date) + " · " + count + (count === 3 ? "+ completions" : " completions");
       cell.setAttribute("aria-label", cell.title);
       cell.setAttribute("aria-pressed", String(key === dateKey(selected)));
       if (key === dateKey(today)) cell.setAttribute("aria-current", "date");
@@ -194,6 +238,207 @@ window.addEventListener("storage", event => {
   }
 });
 setInterval(refreshDate, 15000);
+
+const toolKey = "prishas-daily-tools-v1";
+let tools = {};
+try { tools = JSON.parse(localStorage.getItem(toolKey) || "{}"); } catch {}
+const saveTools = () => {
+  try { localStorage.setItem(toolKey, JSON.stringify(tools)); }
+  catch { get("storage").hidden = false; }
+};
+const clockFormat = new Intl.DateTimeFormat("en-IN", {hour:"2-digit",minute:"2-digit",hour12:true});
+function clock() {
+  const now = new Date();
+  const parts = Object.fromEntries(clockFormat.formatToParts(now).map(part => [part.type, part.value]));
+  get("hour").textContent = parts.hour;
+  get("minute").textContent = parts.minute;
+  get("period").textContent = parts.dayPeriod;
+  get("clock").dateTime = now.toISOString();
+}
+clock();
+setInterval(clock, 1000);
+let panel = "Today";
+let planningDate = new Date(today);
+let displayedMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+const monthFormat = new Intl.DateTimeFormat("en-IN",{month:"long",year:"numeric"});
+let audioUrl;
+function showPanel(name) {
+  panel = name;
+  get("extras").hidden = name === "Today";
+  for (const button of get("nav").querySelectorAll("button")) {
+    if (button.textContent === name) button.setAttribute("aria-current","page");
+    else button.removeAttribute("aria-current");
+  }
+  if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = undefined; }
+  get("tool").replaceChildren();
+  if (name === "Today") { pick(today); return; }
+  get("extra-heading").textContent = name;
+  renderTool();
+}
+function element(tag, value, parent = get("tool")) {
+  const node = document.createElement(tag);
+  if (value !== undefined) node.textContent = value;
+  parent.append(node);
+  return node;
+}
+function action(label, handler, parent) {
+  const button = element("button", label, parent);
+  button.type = "button";
+  button.addEventListener("click", handler);
+  return button;
+}
+function renderList(key, placeholder, checkable = true) {
+  const entries = tools[key] ??= [];
+  const form = element("form");
+  const input = element("input",undefined,form);
+  input.required = true;
+  input.maxLength = 160;
+  input.placeholder = placeholder;
+  input.setAttribute("aria-label",placeholder);
+  element("button","Add",form).type = "submit";
+  const list = element("ul");
+  function renderEntries() {
+    list.replaceChildren();
+    for (const [index,entry] of entries.entries()) {
+      const row = element("li",undefined,list);
+      if (checkable) {
+        const label = element("label",undefined,row);
+        const check = element("input",undefined,label);
+        check.type = "checkbox";
+        check.checked = entry.done;
+        check.addEventListener("change",() => {
+          entry.done = check.checked;
+          saveTools();
+          updateProgress();
+        });
+        label.append(document.createTextNode(" " + entry.text));
+      } else element("span",entry.text,row);
+      const remove = action("Remove",() => {
+        entries.splice(index,1);
+        saveTools();
+        renderEntries();
+      },row);
+      remove.setAttribute("aria-label","Remove " + entry.text);
+    }
+    updateProgress();
+  }
+  const progress = key === "Goals" ? element("progress") : null;
+  function updateProgress() {
+    if (!progress) return;
+    progress.max = entries.length || 1;
+    progress.value = entries.filter(entry => entry.done).length;
+    progress.setAttribute("aria-label",progress.value + " of " + entries.length + " goals complete");
+  }
+  form.addEventListener("submit",event => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value) return;
+    entries.push({text:value,done:false});
+    saveTools();
+    input.value = "";
+    renderEntries();
+    input.focus();
+  });
+  renderEntries();
+}
+function renderSchedule() {
+  const title = element("p",monthFormat.format(displayedMonth));
+  for (const [delta,caption] of [[-1,"Previous month"],[1,"Next month"]]) {
+    action(caption,() => {
+      displayedMonth = new Date(displayedMonth.getFullYear(),displayedMonth.getMonth()+delta,1);
+      showPanel("Schedule");
+    },title);
+  }
+  const grid = element("div");
+  grid.className = "month";
+  for (const day of ["M","T","W","T","F","S","S"]) element("small",day,grid);
+  const offset = (displayedMonth.getDay()+6)%7;
+  for(let i=0;i<offset;i++) element("span",undefined,grid);
+  const count = new Date(displayedMonth.getFullYear(),displayedMonth.getMonth()+1,0).getDate();
+  for(let day=1;day<=count;day++) {
+    const date = new Date(displayedMonth.getFullYear(),displayedMonth.getMonth(),day);
+    const key = dateKey(date);
+    const eventCount = tools["events:"+key]?.length || 0;
+    const button = action(String(day), () => {
+      planningDate = date;
+      showPanel("Schedule");
+    },grid);
+    button.setAttribute("aria-label",longLabel.format(date) + " · " + eventCount + " events");
+    button.setAttribute("aria-pressed",String(key===dateKey(planningDate)));
+    if (eventCount) element("small",String(eventCount),button);
+  }
+  element("p",longLabel.format(planningDate));
+  renderList("events:"+dateKey(planningDate),"Add an event",false);
+}
+const habitLabels = ["Study","Tech projects","Research paper","French practice","Guitar","Read","Workout","Water","Skincare","Dental care"];
+function renderTool() {
+  if (panel === "Schedule") { renderSchedule(); return; }
+  if (panel === "Notes") {
+    const notes = element("textarea");
+    notes.placeholder = "Write a note…";
+    notes.setAttribute("aria-label","Notes");
+    notes.value = tools.notes || "";
+    notes.addEventListener("input",() => { tools.notes = notes.value; saveTools(); });
+    return;
+  }
+  if (panel === "Habits") {
+    element("p",longLabel.format(selected));
+    const checkboxKey = "habits:" + dateKey(selected);
+    const checked = tools[checkboxKey] ??= {};
+    for (const habit of habitLabels) {
+      const label = element("label");
+      const control = element("input",undefined,label);
+      control.type = "checkbox";
+      control.checked = !!checked[habit];
+      label.append(document.createTextNode(" " + habit));
+      control.addEventListener("change",() => {
+        checked[habit] = control.checked;
+        saveTools();
+        renderActivity();
+      });
+    }
+    return;
+  }
+  if (panel === "Music") {
+    const file = element("input");
+    file.type = "file";
+    file.accept = "audio/*";
+    file.setAttribute("aria-label","Choose audio files");
+    file.multiple = true;
+    const player = element("audio");
+    player.controls = true;
+    let tracks = [];
+    let index = 0;
+    function playTrack(step) {
+      if (!tracks.length) return;
+      index = (index+step+tracks.length)%tracks.length;
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      audioUrl = URL.createObjectURL(tracks[index]);
+      player.src = audioUrl;
+      player.play().catch(() => {});
+    }
+    action("Previous",() => playTrack(-1));
+    action("Next",() => playTrack(1));
+    player.addEventListener("ended",() => playTrack(1));
+    file.addEventListener("change",() => { tracks = Array.from(file.files); index = 0; playTrack(0); });
+    return;
+  }
+  if (panel === "Weather") {
+    const link = element("a","Bengaluru weather forecast");
+    link.href = "https://www.google.com/search?q=Bengaluru+weather";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    return;
+  }
+  const placeholders = {Goals:"Add a goal",Checklist:"Add an item",Closet:"Add an outfit",Finance:"Add a budget item",School:"Add an assignment",Fitness:"Add a workout"};
+  renderList(panel,placeholders[panel]);
+}
+get("nav").addEventListener("click",event => {
+  const button = event.target.closest("button");
+  if (button) showPanel(button.textContent);
+});
+get("close-tools").addEventListener("click",() => showPanel("Today"));
+
 pick(today);
 </script>
 </body>
