@@ -84,92 +84,42 @@ button.link{color:#7c2949}
 @media(max-width:500px){header{min-height:96px;padding:14px} h1{font-size:2rem} .flip b{font-size:1.5rem} nav button{padding:6px 8px}}
 
 
-/* Habit Trail */
+
+/* Illustrated Habit Trail */
 #habit-trail{scroll-margin-top:16px}
 #habit-trail .heading{background:#ffdce7}
 .habit-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}
 .habit-intro output{color:#752544;font-weight:700}
 .habit-board{
-  --bend:clamp(17px,4vw,40px);
-  --row-gap:38px;
-  margin:0;padding:20px calc(var(--bend) + 10px);
-  border:1px solid #efd4c5;border-radius:19px;
-  background-color:#fff8eb;
-  background-image:radial-gradient(#ecc9bf 0.7px,transparent 0.7px);
-  background-size:13px 13px;
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:480px;border:1px solid #edc9bc;border-radius:16px;
+  background:#fff4dc url("habit-neighborhood.jpg") center / 100% 100% no-repeat;
 }
-.habit-flourish{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#873953;font-family:Georgia,serif}
-.habit-flourish strong{border:1px solid #e0a9b5;border-radius:6px;padding:5px 11px;background:#ffe2e9}
-.habit-flourish span{font-size:clamp(1.15rem,4vw,2rem);letter-spacing:.12em}
-.habit-path{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(110px,1fr);gap:var(--row-gap) 0;list-style:none;padding:0!important;margin:18px 0}
-.habit-step{position:relative;grid-column:var(--column);grid-row:var(--row);margin:0!important;min-width:0}
-.habit-step:not(:last-child)::after{display:none;content:"";position:absolute;pointer-events:none;box-sizing:border-box;top:50%;width:calc(var(--bend) + 1px);height:calc(100% + var(--row-gap));border:11px solid #e8aec1}
-.habit-step[data-direction=down][data-side=right]:not(:last-child)::after{display:block;left:100%;border-left:0;border-radius:0 30px 30px 0}
-.habit-step[data-direction=down][data-side=left]:not(:last-child)::after{display:block;right:100%;border-right:0;border-radius:30px 0 0 30px}
-button.habit-tile{position:relative;width:100%;height:100%;display:grid;grid-template-rows:auto 1fr;gap:5px;text-align:left;padding:10px 11px;border:1px solid #d9a6b1;border-radius:3px;background:#fffdf1;color:#652a42;box-shadow:0 4px 0 #edd1cd;transition:background .18s ease}
-button.habit-tile:hover:not(:disabled){border-color:#a65170}
-button.habit-tile:focus-visible{z-index:1}
-button.habit-tile[aria-pressed=true]{background:#f6a5c5;border-color:#b5577c}
+.habit-path{position:absolute;inset:0;list-style:none;margin:0!important;padding:0!important;pointer-events:none}
+.habit-path .habit-step{position:static;margin:0}
+button.habit-tile{
+  position:absolute;inset:0;width:100%;height:100%;padding:0;margin:0;
+  border:0;border-radius:0;pointer-events:auto;
+  background-color:#fff6de;color:#56253a;clip-path:var(--road-shape);
+  background-image:radial-gradient(#9d654a25 .65px,transparent .8px);
+  background-size:4px 4px;
+  transition:background-color .18s ease;
+}
+button.habit-tile[aria-pressed=true]{background-color:#ef91ba}
+button.habit-tile:hover:not(:disabled),button.habit-tile:focus-visible{background-color:#f5d9d3}
+button.habit-tile[aria-pressed=true]:hover,button.habit-tile[aria-pressed=true]:focus-visible{background-color:#e779aa}
 button.habit-tile:disabled{opacity:1;cursor:default}
-.habit-tile-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.habit-check{display:grid;place-items:center;width:18px;height:18px;border:1px solid #b9748b;border-radius:50%;background:#fffaf1;color:#782848;font-weight:800}
-.habit-title{font-family:Georgia,serif;font-weight:700;font-size:.94rem;overflow-wrap:anywhere;align-self:center}
+.habit-caption{
+  position:absolute;left:var(--label-x);top:var(--label-y);width:var(--label-width);
+  transform:translate(-50%,-50%);text-align:center;pointer-events:none;
+  font:700 clamp(.73rem,1.6vw,.95rem)/1.08 Georgia,serif;
+}
+.habit-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.habit-check{display:inline-block;margin-top:2px;font:700 .75rem/1 system-ui}
+.habit-check:empty{display:none}
+.habit-sign{position:absolute;z-index:1;transform:translate(-50%,-50%);pointer-events:none;padding:3px 10px;border-radius:20px;background:#7e3953;color:#fff4e8;font:700 .8rem Georgia,serif}
 .habit-feedback{min-height:1.3em;margin-top:7px;font-size:.85rem}
-@media(max-width:620px){
-  .habit-path{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .habit-step{grid-column:var(--small-column);grid-row:var(--small-row)}
-  .habit-step[data-direction=down][data-side]:not(:last-child)::after{display:none}
-  .habit-step[data-small-direction=down][data-small-side=right]:not(:last-child)::after{display:block;left:100%;right:auto;border:11px solid #e8aec1;border-left:0;border-radius:0 30px 30px 0}
-  .habit-step[data-small-direction=down][data-small-side=left]:not(:last-child)::after{display:block;right:100%;left:auto;border:11px solid #e8aec1;border-right:0;border-radius:30px 0 0 30px}
-}
 @media(prefers-reduced-motion:reduce){button.habit-tile{transition:none}}
-
-.habit-board{
-  --row-gap:86px;
-  background-color:#fffaf0;
-  background-image:radial-gradient(#e6bbaf 0.65px,transparent 0.65px);
-}
-.habit-flourish{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
-  align-items:end;
-  gap:clamp(6px,2vw,24px);
-}
-.habit-flourish:first-child{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)}
-.habit-flourish strong{align-self:center}
-.trail-scene{
-  display:block;width:100%;aspect-ratio:1.5;max-width:290px;
-  background-image:url("trail-illustrations.jpg");
-  background-size:200% 200%;background-repeat:no-repeat;
-  mix-blend-mode:multiply;
-}
-.trail-scene-train{background-position:left top}
-.trail-scene-cafe{background-position:right top}
-.trail-scene-pastry{background-position:left bottom}
-.trail-scene-shop{background-position:right bottom}
-.trail-milepost{
-  font:700 .76rem Georgia,serif;letter-spacing:.06em;
-  color:#7f3f57;border-bottom:1px solid #e8acba;padding:3px 0;
-}
-.habit-path{grid-auto-rows:minmax(92px,1fr)}
-.habit-step::before{
-  content:"";display:none;position:absolute;pointer-events:none;
-  top:calc(100% + 8px);width:min(130%,170px);height:70px;
-  background-image:url("trail-illustrations.jpg");background-size:200% 200%;
-  background-repeat:no-repeat;mix-blend-mode:multiply;
-}
-.habit-step[data-direction=down][data-side=right]:not(:last-child)::before{
-  display:block;right:115%;background-position:left bottom;
-}
-.habit-step[data-direction=down][data-side=left]:not(:last-child)::before{
-  display:block;left:115%;background-position:right bottom;
-}
-button.habit-tile{background:#fff9e7;border-color:#dcaabb}
-button.habit-tile[aria-pressed=true]{background:#f59bbd;border-color:#be5d83}
-@media(max-width:620px){
-  .habit-board{--row-gap:48px}
-  .habit-step[data-direction=down][data-side]:not(:last-child)::before{display:none}
-}
 </style>
 </head>
 <body>
@@ -476,8 +426,54 @@ function renderSchedule() {
 const habitLabels = ["Study","Tech projects","Research paper","French practice","Guitar","Read","Workout","Water","Skincare","Dental care"];
 
 let updateTrailTasks = () => {};
+let trailObserver;
+
+function layoutTrail(board, tiles, startSign, finishSign) {
+  const width = board.clientWidth;
+  if (!width) return;
+  const vertical = Math.max(420, tiles.length * (width < 480 ? 53 : 47));
+  const height = vertical + 82;
+  board.style.height = height + "px";
+  const amplitude = Math.min(width * .23, 152);
+  const halfRoad = Math.min(width * .18, 55);
+  const frequency = 2 * Math.PI / Math.max(480, amplitude * 4.5);
+  const phase = .75;
+  const points = [];
+  let length = 0;
+  for (let y = 0; y <= vertical; y++) {
+    const angle = phase + y * frequency;
+    const x = width / 2 + amplitude * Math.sin(angle);
+    const slope = amplitude * frequency * Math.cos(angle);
+    if (y) length += Math.hypot(x - points[y - 1].x, 1);
+    const normal = Math.hypot(1, slope);
+    points.push({x,y:y + 41,nx:1 / normal,ny:-slope / normal,length});
+  }
+  const percentage = (x,y) => (100*x/width).toFixed(3) + "% " + (100*y/height).toFixed(3) + "%";
+  const segmentLength = length / tiles.length;
+  let cursor = 0;
+  tiles.forEach((tile,index) => {
+    const section = [];
+    const first = index * segmentLength + (index ? 1.5 : 0);
+    const last = (index + 1) * segmentLength - (index === tiles.length - 1 ? 0 : 1.5);
+    while (points[cursor].length < first) cursor++;
+    while (cursor < points.length && points[cursor].length <= last) section.push(points[cursor++]);
+    const left = section.map(p => percentage(p.x - p.nx*halfRoad,p.y - p.ny*halfRoad));
+    const right = section.slice().reverse().map(p => percentage(p.x + p.nx*halfRoad,p.y + p.ny*halfRoad));
+    const middle = section[Math.floor(section.length / 2)];
+    tile.style.setProperty("--road-shape","polygon(" + left.concat(right).join(",") + ")");
+    tile.style.setProperty("--label-x",100*middle.x/width + "%");
+    tile.style.setProperty("--label-y",100*middle.y/height + "%");
+    tile.style.setProperty("--label-width",Math.min(halfRoad * 1.45,88) + "px");
+  });
+  startSign.style.left = 100*points[0].x/width + "%";
+  startSign.style.top = "17px";
+  finishSign.style.left = 100*points.at(-1).x/width + "%";
+  finishSign.style.bottom = "5px";
+  finishSign.style.transform = "translateX(-50%)";
+}
 function renderHabitBoard() {
   const root = get("habit-content");
+  trailObserver?.disconnect();
   root.replaceChildren();
   const habits = [...habitLabels, ...(tools.customHabits || [])];
   const checked = tools["habits:" + dateKey(selected)] ??= {};
@@ -488,44 +484,32 @@ function renderHabitBoard() {
   progress.setAttribute("aria-live","polite");
   const board = element("div",undefined,root);
   board.className = "habit-board";
-  const opening = element("div",undefined,board);
-  opening.className = "habit-flourish";
-  element("strong","Start",opening);
-  element("span",undefined,opening).className = "trail-scene trail-scene-train";
-  element("span",undefined,opening).className = "trail-scene trail-scene-cafe";
+  const startSign = element("strong","Start",board);
+  startSign.className = "habit-sign";
   const path = element("ol",undefined,board);
   path.className = "habit-path";
   function updateProgress() {
     progress.textContent = habits.filter(habit => Object.hasOwn(checked,habit) && checked[habit]).length + " of " + habits.length + " habits done";
   }
   const taskTiles = [];
+  const roadTiles = [];
   const taskCount = tasksFor(selected).length;
   const labels = [...Array(taskCount).fill(""), ...habits];
   for (const [index, habit] of labels.entries()) {
     const step = element("li",undefined,path);
     step.className = "habit-step";
-    for (const [width,prefix,directionKey,sideKey] of [[4,"","direction","side"],[2,"small-","smallDirection","smallSide"]]) {
-      const row = Math.floor(index / width);
-      const offset = index % width;
-      const reverse = row % 2 === 1;
-      step.style.setProperty("--" + prefix + "row",row + 1);
-      step.style.setProperty("--" + prefix + "column",reverse ? width - offset : offset + 1);
-      step.dataset[sideKey] = reverse ? "left" : "right";
-      step.dataset[directionKey] = offset === width - 1 ? "down" : reverse ? "left" : "right";
-    }
     const tile = element("button",undefined,step);
     tile.type = "button";
     tile.className = "habit-tile";
-    const top = element("span",undefined,tile);
-    top.className = "habit-tile-top";
-    const marker = element("span",String(index + 1).padStart(2,"0"),top);
-    marker.className = "trail-milepost";
-    marker.setAttribute("aria-hidden","true");
-    const check = element("span",undefined,top);
+    roadTiles.push(tile);
+    const caption = element("span",undefined,tile);
+    caption.className = "habit-caption";
+    const title = element("span",habit,caption);
+    tile.title = habit;
+    title.className = "habit-title";
+    const check = element("span",undefined,caption);
     check.className = "habit-check";
     check.setAttribute("aria-hidden","true");
-    const title = element("span",habit,tile);
-    title.className = "habit-title";
     if (index < taskCount) {
       taskTiles.push({tile,title,check});
       tile.addEventListener("click",() => {
@@ -557,6 +541,7 @@ function renderHabitBoard() {
       const {text,done} = tasks[index];
       const hasTask = Boolean(text.trim());
       title.textContent = hasTask ? text : "";
+      tile.title = hasTask ? text : "";
       tile.disabled = !hasTask;
       tile.setAttribute("aria-label",hasTask ? text : "Empty daily task slot " + (index + 1));
       tile.setAttribute("aria-pressed",String(hasTask && done));
@@ -565,11 +550,12 @@ function renderHabitBoard() {
   };
   updateTrailTasks();
   updateProgress();
-  const finish = element("div",undefined,board);
-  finish.className = "habit-flourish";
-  element("span",undefined,finish).className = "trail-scene trail-scene-pastry";
-  element("span",undefined,finish).className = "trail-scene trail-scene-shop";
-  element("strong","Finish",finish);
+  const finishSign = element("strong","Finish",board);
+  finishSign.className = "habit-sign";
+  const resize = () => layoutTrail(board,roadTiles,startSign,finishSign);
+  resize();
+  trailObserver = new ResizeObserver(resize);
+  trailObserver.observe(board);
   const form = element("form",undefined,root);
   const input = element("input",undefined,form);
   input.required = true;
