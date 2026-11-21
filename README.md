@@ -13,6 +13,6 @@ A blush-pink planner for your top three, your little routines, and the days you 
 
 ## 🍒 Try it locally
 
-Download the repository and serve it with `python3 -m http.server 8000`, then open `http://localhost:8000`.
+Download the repository and serve it with `python3 -m http.server 8000`,  open `http://localhost:8000`.
 
 Built with HTML, CSS, and vanilla JavaScript. Your entries are saved in the browser you use.
