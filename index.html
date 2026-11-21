@@ -112,7 +112,6 @@ button.habit-tile:focus-visible{z-index:1}
 button.habit-tile[aria-pressed=true]{background:#f6a5c5;border-color:#b5577c}
 button.habit-tile:disabled{opacity:1;cursor:default}
 .habit-tile-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.habit-sticker{display:grid;place-items:center;width:37px;height:37px;background:#f9ddd9;border-radius:46% 54% 58% 42%;font-size:23px;transform:rotate(-8deg)}
 .habit-check{display:grid;place-items:center;width:18px;height:18px;border:1px solid #b9748b;border-radius:50%;background:#fffaf1;color:#782848;font-weight:800}
 .habit-title{font-family:Georgia,serif;font-weight:700;font-size:.94rem;overflow-wrap:anywhere;align-self:center}
 .habit-feedback{min-height:1.3em;margin-top:7px;font-size:.85rem}
@@ -124,6 +123,53 @@ button.habit-tile:disabled{opacity:1;cursor:default}
   .habit-step[data-small-direction=down][data-small-side=left]:not(:last-child)::after{display:block;right:100%;left:auto;border:11px solid #e8aec1;border-right:0;border-radius:30px 0 0 30px}
 }
 @media(prefers-reduced-motion:reduce){button.habit-tile{transition:none}}
+
+.habit-board{
+  --row-gap:86px;
+  background-color:#fffaf0;
+  background-image:radial-gradient(#e6bbaf 0.65px,transparent 0.65px);
+}
+.habit-flourish{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+  align-items:end;
+  gap:clamp(6px,2vw,24px);
+}
+.habit-flourish:first-child{grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)}
+.habit-flourish strong{align-self:center}
+.trail-scene{
+  display:block;width:100%;aspect-ratio:1.5;max-width:290px;
+  background-image:url("trail-illustrations.jpg");
+  background-size:200% 200%;background-repeat:no-repeat;
+  mix-blend-mode:multiply;
+}
+.trail-scene-train{background-position:left top}
+.trail-scene-cafe{background-position:right top}
+.trail-scene-pastry{background-position:left bottom}
+.trail-scene-shop{background-position:right bottom}
+.trail-milepost{
+  font:700 .76rem Georgia,serif;letter-spacing:.06em;
+  color:#7f3f57;border-bottom:1px solid #e8acba;padding:3px 0;
+}
+.habit-path{grid-auto-rows:minmax(92px,1fr)}
+.habit-step::before{
+  content:"";display:none;position:absolute;pointer-events:none;
+  top:calc(100% + 8px);width:min(130%,170px);height:70px;
+  background-image:url("trail-illustrations.jpg");background-size:200% 200%;
+  background-repeat:no-repeat;mix-blend-mode:multiply;
+}
+.habit-step[data-direction=down][data-side=right]:not(:last-child)::before{
+  display:block;right:115%;background-position:left bottom;
+}
+.habit-step[data-direction=down][data-side=left]:not(:last-child)::before{
+  display:block;left:115%;background-position:right bottom;
+}
+button.habit-tile{background:#fff9e7;border-color:#dcaabb}
+button.habit-tile[aria-pressed=true]{background:#f59bbd;border-color:#be5d83}
+@media(max-width:620px){
+  .habit-board{--row-gap:48px}
+  .habit-step[data-direction=down][data-side]:not(:last-child)::before{display:none}
+}
 </style>
 </head>
 <body>
@@ -429,7 +475,6 @@ function renderSchedule() {
 }
 const habitLabels = ["Study","Tech projects","Research paper","French practice","Guitar","Read","Workout","Water","Skincare","Dental care"];
 
-const habitStickers = ["✏️","💻","📚","💌","🎸","📖","🛼","💧","🫧","🪥","🍓","🌷","🎀","🍒","🌟","🧁"];
 let updateTrailTasks = () => {};
 function renderHabitBoard() {
   const root = get("habit-content");
@@ -446,7 +491,8 @@ function renderHabitBoard() {
   const opening = element("div",undefined,board);
   opening.className = "habit-flourish";
   element("strong","Start",opening);
-  element("span","✧ 🚃 🍓 ☕ ✿",opening).setAttribute("aria-hidden","true");
+  element("span",undefined,opening).className = "trail-scene trail-scene-train";
+  element("span",undefined,opening).className = "trail-scene trail-scene-cafe";
   const path = element("ol",undefined,board);
   path.className = "habit-path";
   function updateProgress() {
@@ -472,16 +518,15 @@ function renderHabitBoard() {
     tile.className = "habit-tile";
     const top = element("span",undefined,tile);
     top.className = "habit-tile-top";
-    const sticker = element("span",habitStickers[index % habitStickers.length],top);
-    sticker.className = "habit-sticker";
-    sticker.setAttribute("aria-hidden","true");
+    const marker = element("span",String(index + 1).padStart(2,"0"),top);
+    marker.className = "trail-milepost";
+    marker.setAttribute("aria-hidden","true");
     const check = element("span",undefined,top);
     check.className = "habit-check";
     check.setAttribute("aria-hidden","true");
     const title = element("span",habit,tile);
     title.className = "habit-title";
     if (index < taskCount) {
-      sticker.textContent = ["🎀","🍓","🌷"][index];
       taskTiles.push({tile,title,check});
       tile.addEventListener("click",() => {
         const task = tasksFor(selected)[index];
@@ -522,7 +567,8 @@ function renderHabitBoard() {
   updateProgress();
   const finish = element("div",undefined,board);
   finish.className = "habit-flourish";
-  element("span","🌷 🥐 🧁 ✦",finish).setAttribute("aria-hidden","true");
+  element("span",undefined,finish).className = "trail-scene trail-scene-pastry";
+  element("span",undefined,finish).className = "trail-scene trail-scene-shop";
   element("strong","Finish",finish);
   const form = element("form",undefined,root);
   const input = element("input",undefined,form);
