@@ -83,43 +83,47 @@ button.link{color:#7c2949}
 #extras audio{width:min(360px,100%);display:block;margin-top:12px}
 @media(max-width:500px){header{min-height:96px;padding:14px} h1{font-size:2rem} .flip b{font-size:1.5rem} nav button{padding:6px 8px}}
 
-/* Habit board */
-#extras:has(.habit-board) .heading{background:#ffdce7}
+
+/* Habit Trail */
+#habit-trail{scroll-margin-top:16px}
+#habit-trail .heading{background:#ffdce7}
 .habit-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}
 .habit-intro output{color:#752544;font-weight:700}
-.habit-board{position:relative;isolation:isolate;margin:0;padding:22px clamp(12px,4vw,42px);overflow:hidden;border:1px solid #efd4c5;border-radius:19px;background-color:#fff8eb;background-image:radial-gradient(#e9bfbd 0.7px,transparent 0.7px);background-size:13px 13px}
-.habit-flourish{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#8c3e5c;font-family:Georgia,serif;font-style:italic;font-size:1.05rem}
-.habit-flourish span[aria-hidden=true]{font-size:1.4rem;letter-spacing:.22em}
-.habit-path{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;list-style:none;padding:0!important;margin:16px 0}
+.habit-board{
+  --bend:clamp(17px,4vw,40px);
+  --row-gap:38px;
+  margin:0;padding:20px calc(var(--bend) + 10px);
+  border:1px solid #efd4c5;border-radius:19px;
+  background-color:#fff8eb;
+  background-image:radial-gradient(#ecc9bf 0.7px,transparent 0.7px);
+  background-size:13px 13px;
+}
+.habit-flourish{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#873953;font-family:Georgia,serif}
+.habit-flourish strong{border:1px solid #e0a9b5;border-radius:6px;padding:5px 11px;background:#ffe2e9}
+.habit-flourish span{font-size:clamp(1.15rem,4vw,2rem);letter-spacing:.12em}
+.habit-path{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(110px,1fr);gap:var(--row-gap) 0;list-style:none;padding:0!important;margin:18px 0}
 .habit-step{position:relative;grid-column:var(--column);grid-row:var(--row);margin:0!important;min-width:0}
-.habit-step:not(:last-child)::after{content:"";position:absolute;z-index:-1;background:#e2a7b8}
-.habit-step[data-direction=right]::after,.habit-step[data-direction=left]::after{width:16px;height:8px;top:calc(50% - 4px)}
-.habit-step[data-direction=right]::after{left:100%}
-.habit-step[data-direction=left]::after{right:100%}
-.habit-step[data-direction=down]::after{width:8px;height:16px;top:100%;left:calc(50% - 4px)}
-button.habit-tile{width:100%;height:100%;min-height:98px;display:grid;grid-template-rows:auto 1fr;gap:7px;text-align:left;padding:10px 12px;border:1px solid #dab5ad;border-radius:12px 17px 12px 17px;background:#fffdf3;color:#652a42;box-shadow:0 3px 0 #efd3cd;transition:background .18s ease,border-color .18s ease}
-button.habit-tile:hover{border-color:#aa5774}
-button.habit-tile[aria-pressed=true]{background:#f7a9c7;border-color:#bd5b81;box-shadow:0 3px 0 #dda4b1}
+.habit-step:not(:last-child)::after{display:none;content:"";position:absolute;pointer-events:none;box-sizing:border-box;top:50%;width:calc(var(--bend) + 1px);height:calc(100% + var(--row-gap));border:11px solid #e8aec1}
+.habit-step[data-direction=down][data-side=right]:not(:last-child)::after{display:block;left:100%;border-left:0;border-radius:0 30px 30px 0}
+.habit-step[data-direction=down][data-side=left]:not(:last-child)::after{display:block;right:100%;border-right:0;border-radius:30px 0 0 30px}
+button.habit-tile{position:relative;width:100%;height:100%;display:grid;grid-template-rows:auto 1fr;gap:5px;text-align:left;padding:10px 11px;border:1px solid #d9a6b1;border-radius:3px;background:#fffdf1;color:#652a42;box-shadow:0 4px 0 #edd1cd;transition:background .18s ease}
+button.habit-tile:hover:not(:disabled){border-color:#a65170}
+button.habit-tile:focus-visible{z-index:1}
+button.habit-tile[aria-pressed=true]{background:#f6a5c5;border-color:#b5577c}
+button.habit-tile:disabled{opacity:1;cursor:default}
 .habit-tile-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.habit-sticker{display:grid;place-items:center;width:29px;height:29px;background:#f9e0df;border-radius:46% 54% 58% 42%;font-size:17px;transform:rotate(-8deg)}
-.habit-check{display:grid;place-items:center;width:19px;height:19px;border:1px solid #b9748b;border-radius:50%;background:#fffaf1;color:#782848;font-weight:800}
+.habit-sticker{display:grid;place-items:center;width:37px;height:37px;background:#f9ddd9;border-radius:46% 54% 58% 42%;font-size:23px;transform:rotate(-8deg)}
+.habit-check{display:grid;place-items:center;width:18px;height:18px;border:1px solid #b9748b;border-radius:50%;background:#fffaf1;color:#782848;font-weight:800}
 .habit-title{font-family:Georgia,serif;font-weight:700;font-size:.94rem;overflow-wrap:anywhere;align-self:center}
 .habit-feedback{min-height:1.3em;margin-top:7px;font-size:.85rem}
 @media(max-width:620px){
- .habit-path{grid-template-columns:repeat(2,minmax(0,1fr))}
- .habit-step{grid-column:var(--small-column);grid-row:var(--small-row)}
- .habit-step[data-small-direction=right]::after,.habit-step[data-small-direction=left]::after{width:16px;height:8px;top:calc(50% - 4px);left:auto;right:auto}
- .habit-step[data-small-direction=right]::after{left:100%}
- .habit-step[data-small-direction=left]::after{right:100%}
- .habit-step[data-small-direction=down]::after{width:8px;height:16px;top:100%;left:calc(50% - 4px);right:auto}
+  .habit-path{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .habit-step{grid-column:var(--small-column);grid-row:var(--small-row)}
+  .habit-step[data-direction=down][data-side]:not(:last-child)::after{display:none}
+  .habit-step[data-small-direction=down][data-small-side=right]:not(:last-child)::after{display:block;left:100%;right:auto;border:11px solid #e8aec1;border-left:0;border-radius:0 30px 30px 0}
+  .habit-step[data-small-direction=down][data-small-side=left]:not(:last-child)::after{display:block;right:100%;left:auto;border:11px solid #e8aec1;border-right:0;border-radius:30px 0 0 30px}
 }
 @media(prefers-reduced-motion:reduce){button.habit-tile{transition:none}}
-.cell[data-count="4"],.swatch[data-count="4"]{background:#581b34}
-.cell[data-count="3"],.cell[data-count="4"]{color:#fff9fa}
-.cell[data-count="1"],.cell[data-count="2"]{color:#421126}
-#habit-trail .heading{background:#ffdce7}
-#habit-trail{scroll-margin-top:16px}
-button.habit-tile:disabled{opacity:1;cursor:default;border-color:#dab5ad}
 </style>
 </head>
 <body>
@@ -144,9 +148,6 @@ button.habit-tile:disabled{opacity:1;cursor:default;border-color:#dab5ad}
 <section id="extras" class="toolbox" hidden aria-labelledby="extra-heading"><div class="heading"><h2 id="extra-heading"></h2><button id="close-tools" type="button">Close</button></div><div id="tool"></div></section>
 <section id="habit-trail" class="toolbox" aria-labelledby="habit-heading"><div class="heading"><h2 id="habit-heading" tabindex="-1">Habit Trail</h2></div><div id="habit-content"></div></section>
 <p id="storage" hidden role="status">Browser storage is unavailable. Changes will last until you close or reload this page.</p>
-<figure style="margin:20px 0 0">
-  <img src="habit-walkway.jpg" alt="Illustrated board game with a winding pink path divided into steps, surrounded by playful café scenes, trains, and food drawings" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;border-radius:15px">
-</figure>
 </main>
 <script>
 const storageKey = "prishas-daily-v1";
@@ -445,7 +446,7 @@ function renderHabitBoard() {
   const opening = element("div",undefined,board);
   opening.className = "habit-flourish";
   element("strong","Start",opening);
-  element("span","✧ 🍓 ✿",opening).setAttribute("aria-hidden","true");
+  element("span","✧ 🚃 🍓 ☕ ✿",opening).setAttribute("aria-hidden","true");
   const path = element("ol",undefined,board);
   path.className = "habit-path";
   function updateProgress() {
@@ -457,12 +458,13 @@ function renderHabitBoard() {
   for (const [index, habit] of labels.entries()) {
     const step = element("li",undefined,path);
     step.className = "habit-step";
-    for (const [width,prefix,directionKey] of [[4,"","direction"],[2,"small-","smallDirection"]]) {
+    for (const [width,prefix,directionKey,sideKey] of [[4,"","direction","side"],[2,"small-","smallDirection","smallSide"]]) {
       const row = Math.floor(index / width);
       const offset = index % width;
       const reverse = row % 2 === 1;
       step.style.setProperty("--" + prefix + "row",row + 1);
       step.style.setProperty("--" + prefix + "column",reverse ? width - offset : offset + 1);
+      step.dataset[sideKey] = reverse ? "left" : "right";
       step.dataset[directionKey] = offset === width - 1 ? "down" : reverse ? "left" : "right";
     }
     const tile = element("button",undefined,step);
@@ -520,7 +522,7 @@ function renderHabitBoard() {
   updateProgress();
   const finish = element("div",undefined,board);
   finish.className = "habit-flourish";
-  element("span","☁️ ✦ 🌷",finish).setAttribute("aria-hidden","true");
+  element("span","🌷 🥐 🧁 ✦",finish).setAttribute("aria-hidden","true");
   element("strong","Finish",finish);
   const form = element("form",undefined,root);
   const input = element("input",undefined,form);
