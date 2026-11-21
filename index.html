@@ -120,13 +120,25 @@ button.habit-tile:disabled{opacity:1;cursor:default}
 .habit-sign{position:absolute;z-index:1;transform:translate(-50%,-50%);pointer-events:none;padding:3px 10px;border-radius:20px;background:#7e3953;color:#fff4e8;font:700 .8rem Georgia,serif}
 .habit-feedback{min-height:1.3em;margin-top:7px;font-size:.85rem}
 @media(prefers-reduced-motion:reduce){button.habit-tile{transition:none}}
+
+.diet-form{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));align-items:end}
+.diet-field{margin:0!important;font-size:.85rem;font-weight:650}
+.diet-field input,.diet-field select{display:block;width:100%;margin-top:4px}
+.diet-field select{border:1px solid var(--line);border-radius:7px;background:#fff5f5;color:inherit;font:inherit;padding:7px}
+.diet-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px}
+.diet-summary strong{color:#752544}
+.diet-log{list-style:none;padding:0!important}
+.diet-log li{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:7px 0}
+.diet-log li span{min-width:0}
+.diet-log li button{flex:none}
+.diet-note{font-size:.82rem}
 </style>
 </head>
 <body>
 <main>
 <header><div><h1>Prisha’s Daily</h1><p id="today"></p></div><time id="clock" class="flip"><b id="hour"></b><b id="minute"></b><small id="period"></small></time></header>
 <nav aria-label="Dashboard tools" id="nav">
-<button type="button" aria-current="page">Today</button><button type="button" >Schedule</button><button type="button" >Notes</button><button type="button" >Goals</button><button type="button" >Habits</button><button type="button" >Checklist</button><button type="button" >Music</button><button type="button" >Closet</button><button type="button" >Finance</button><button type="button" >School</button><button type="button" >Fitness</button><button type="button" >Weather</button>
+<button type="button" aria-current="page">Today</button><button type="button" >Schedule</button><button type="button" >Notes</button><button type="button" >Goals</button><button type="button" >Habits</button><button type="button" >Checklist</button><button type="button" >Music</button><button type="button" >Closet</button><button type="button" >Finance</button><button type="button" >School</button><button type="button" >Fitness</button><button type="button">Diet</button><button type="button" >Weather</button>
 </nav>
 <div class="dashboard">
 <section aria-labelledby="activity">
@@ -223,6 +235,7 @@ function renderTasks() {
 }
 function pick(date) {
   selected = date;
+  if (panel === "Diet") showPanel("Diet");
   renderHabitBoard();
   renderTasks();
   renderActivity();
@@ -582,7 +595,122 @@ function renderHabitBoard() {
   });
 }
 
+
+const dietFoods = [
+  ["Apple, raw",52], ["Banana, raw",89], ["Chicken breast, roasted",165],
+  ["Chickpeas, boiled",164], ["Lentils, boiled",116], ["White rice, cooked",130]
+];
+
+function renderDiet() {
+  const key = "diet:" + dateKey(selected);
+  const entries = tools[key] ??= [];
+  const summary = element("div");
+  summary.className = "diet-summary";
+  const dateField = element("label","Log date",summary);
+  dateField.className = "diet-field";
+  const day = element("input",undefined,dateField);
+  day.type = "date";
+  day.max = dateKey(today);
+  day.value = dateKey(selected);
+  day.addEventListener("change", () => {
+    if (!day.value || !day.checkValidity()) return;
+    const [year,month,date] = day.value.split("-").map(Number);
+    pick(new Date(year,month - 1,date));
+  });
+  const total = element("strong",undefined,summary);
+  total.setAttribute("aria-live","polite");
+
+  const form = element("form");
+  form.className = "diet-form";
+  function field(label,tag,type) {
+    const wrapper = element("label",label,form);
+    wrapper.className = "diet-field";
+    const control = element(tag,undefined,wrapper);
+    if (type) control.type = type;
+    return control;
+  }
+  const food = field("Food","select");
+  for (const [name] of dietFoods) element("option",name,food).value = name;
+  element("option","Custom food",food).value = "custom";
+
+  const custom = field("Food name","input","text");
+  custom.maxLength = 100;
+  const grams = field("Portion (g)","input","number");
+  grams.min = "0.1";
+  grams.max = "100000";
+  grams.step = "any";
+  grams.value = "100";
+  const calories = field("Calories for your portion","input","number");
+  calories.min = "0";
+  calories.max = "100000";
+  calories.step = "any";
+  const preview = element("output",undefined,form);
+  preview.setAttribute("aria-live","polite");
+  const submit = element("button","Log food",form);
+  submit.type = "submit";
+  const note = element("p","Estimates use reference foods. For packaged foods or prepared dishes, enter the calories from the label or your own estimate.");
+  note.className = "diet-note";
+  const list = element("ul");
+  list.className = "diet-log";
+  const empty = element("p","No food logged for this day.");
+  function updateLog() {
+    empty.hidden = entries.length > 0;
+    total.textContent = entries.reduce((sum,entry) => sum + entry.kcal,0) + " kcal logged";
+    list.replaceChildren();
+    entries.forEach((entry,index) => {
+      const item = element("li",undefined,list);
+      element("span",entry.name + (entry.grams ? " · " + entry.grams + " g" : "") + " · " + entry.kcal + " kcal",item);
+      action("Remove",() => {
+        entries.splice(index,1);
+        saveTools();
+        updateLog();
+      },item).setAttribute("aria-label","Remove " + entry.name);
+    });
+  }
+  function getEntry() {
+    if (food.value === "custom") {
+      const name = custom.value.trim();
+      return name && calories.value !== "" && calories.checkValidity()
+        ? {name,kcal:Math.round(Number(calories.value))} : null;
+    }
+    const match = dietFoods.find(([name]) => name === food.value);
+    const portion = Number(grams.value);
+    return match && portion > 0 && grams.checkValidity()
+      ? {name:match[0],grams:portion,kcal:Math.round(match[1] * portion / 100)} : null;
+  }
+  function updateEstimate() {
+    const manual = food.value === "custom";
+    for (const [control,visible] of [[custom,manual],[calories,manual],[grams,!manual]]) {
+      control.parentElement.hidden = !visible;
+      control.disabled = !visible;
+      control.required = visible;
+    }
+    const entry = getEntry();
+    preview.textContent = entry ? (manual ? "" : "About ") + entry.kcal + " kcal" : "";
+    submit.disabled = !entry;
+  }
+  form.addEventListener("input",updateEstimate);
+  food.addEventListener("change",updateEstimate);
+  form.addEventListener("submit",event => {
+    event.preventDefault();
+    const entry = getEntry();
+    if (!entry) return;
+    entries.push(entry);
+    saveTools();
+    updateLog();
+    if (food.value === "custom") {
+      custom.value = "";
+      calories.value = "";
+      custom.focus();
+      updateEstimate();
+    }
+  });
+  updateEstimate();
+  updateLog();
+}
+
 function renderTool() {
+  if (panel === "Diet") { renderDiet(); return; }
   if (panel === "Schedule") { renderSchedule(); return; }
   if (panel === "Notes") {
     const notes = element("textarea");
